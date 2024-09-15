@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: chatbot-ui
+---
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: chatbot-ui
+#   namespace: chatbot-ui
+# data:
+#   OPENAI_API_KEY: c2stcHJvai1ya2R2czluT0lOWXpMa2tjWnhlZlQzQmxia0ZKeTA4U1RDdDkySlRMZEhxQmFLRGw=
+
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: chatbot-ui
+  name: chatbot-ui
+type: Opaque
+data:
+  OPENAI_API_KEY: c2stcHJvai1ya2R2czluT0lOWXpMa2tjWnhlZlQzQmxia0ZKeTA4U1RDdDkySlRMZEhxQmFLRGw=
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: chatbot-ui
+  name: chatbot-ui
+  labels:
+    app: chatbot-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chatbot-ui
+  template:
+    metadata:
+      labels:
+        app: chatbot-ui
+    spec:
+      containers:
+        - name: chatbot-ui
+          image: lucasycosta/chatbot-ui:latest
+          resources: {}
+          ports:
+            - containerPort: 3000
+          # envFrom:
+          #   - configMapRef:
+          #       name: chatbot-ui.yaml
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: chatbot-ui
+                  key: OPENAI_API_KEY
+---
+kind: Service
+apiVersion: v1
+metadata:
+  namespace: chatbot-ui
+  name: chatbot-ui
+  labels:
+    app: chatbot-ui
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3000
+  selector:
+    app: chatbot-ui
+  type: ClusterIP
